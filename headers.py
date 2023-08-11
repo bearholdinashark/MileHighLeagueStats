@@ -1,11 +1,10 @@
-import pysmashgg as p
-
-__token__ = ''
+__token__ = '401d7ec72171a765951f742ae2202b7f'
 __tournament_url__ = 'colorado-mile-high-burst-monthly-july-2023'
 __game__ = 'street-fighter-6'
 __game_formal__ = 'Street Fighter 6'
 __APIversion__ = 'alpha'
 __tournament_slug__ = 'colorado-mile-high-burst-monthly-july-2023'
+__autoqual_slug__ = ['colorado-mile-high-burst-monthly-july-2023']
 __top8_query__ = """
     query TournamentQuery($slug: String, $eventID: ID, $page: Int!, $perPage: Int!) {
       tournament(slug: $slug) {
@@ -78,10 +77,3 @@ __dq_vars__ = {
   "page": 1,
   "perPage": 50
 }
-
-
-# setup smash client
-def init() -> p.smashgg:
-    smash = p.SmashGG(__token__, True)
-    return smash
-

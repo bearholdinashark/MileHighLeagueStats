@@ -2,17 +2,6 @@ import headers as h
 from graphqlclient import GraphQLClient
 import pandas as p
 import json as j
-from pprint import pprint
-
-# config values
-# first = 100
-# second = 50
-# third = 25
-# fourth = 12
-# fifth = 6
-# seventh = 3
-
-smash = h.init()
 
 score_map = {
     1: 100,
@@ -22,12 +11,6 @@ score_map = {
     5: 6,
     7: 3
 }
-
-
-# find top 8
-def get_top8():
-    top_entrants = smash.tournament_show_entrants(h.__tournament_url__, h.__game__, 0)
-    return top_entrants
 
 
 # total entrants
@@ -48,11 +31,16 @@ def get_top_8():
     event_list = client.execute(h.__top8_query__, h.__top8_vars__)
     standings = j.loads(event_list)['data']['tournament']['events'][0]['standings']['nodes']
 
-    cols = ["player", "standing"]
+    cols = ["player", "standing", "autoqual"]
     top_df = p.DataFrame(columns=cols)
     for node in standings:
-        record = {"player": node['entrant']['name'], "standing": node['placement']}
-        top_df = top_df.append(record, ignore_index=True)
+        #print(node)
+        if h.__top8_vars__['slug'] in h.__autoqual_slug__ and node['placement'] == 1:
+            record = {"player": node['entrant']['name'], "standing": node['placement'], 'autoqual': 1}
+            top_df = top_df.append(record, ignore_index=True)
+        else:
+            record = {"player": node['entrant']['name'], "standing": node['placement'], 'autoqual': 0}
+            top_df = top_df.append(record, ignore_index=True)
 
     #print(top_df)
     return top_df
@@ -66,11 +54,14 @@ def get_dqs():
     dq_df = p.DataFrame(columns=cols)
     while record_count != 0:
         set_list = client.execute(h.__dq_query__, h.__dq_vars__)
+
         sets = j.loads(set_list)
         count = j.loads(set_list)
+
         record_count = count['data']['tournament']['events'][0]['sets']['pageInfo']['total']
-        h.__dq_vars__['page'] += 1
         sets = sets['data']['tournament']['events'][0]['sets']
+
+        h.__dq_vars__['page'] += 1
 
         for node in sets['nodes']:
             if node['slots'][0]['standing']['stats']['score']['value'] == -1:
@@ -86,7 +77,7 @@ def get_dqs():
 
 
 def calculate_scores() -> p.DataFrame:
-    cols = ['player', 'score', 'rank']
+    cols = ['player', 'score', 'rank', 'autoqual', 'qualified']
     the_list = p.DataFrame(columns=cols)
     top8 = get_top_8()
     total = get_total_entrants()
@@ -96,102 +87,17 @@ def calculate_scores() -> p.DataFrame:
     print('total - dq: ', entrants)
     print('total: ', total)
     print('dq: ', dq_count)
-    print('---')
-    print(top8)
+    #print(top8)
 
     for i, r in top8.iterrows():
-        print('RANK: ', r['player'])
-        record = {'player': r['player'], 'score': score_map[r['standing']] + entrants}
+        record = {'player': r['player'],
+                  'score': score_map[r['standing']] + entrants,
+                  'rank': 0,
+                  'autoqual': r['autoqual'],
+                  'qualified': 0}
         the_list = the_list.append(record, ignore_index=True)
-        # if r['standing'] == 1:
-        #     record = {'player': r['player'], 'score': 100 + entrants}
-        #     the_list = the_list.append(record, ignore_index=True)
-        # elif r['standing'] == 2:
-        #     record = {'player': r['player'], 'score': 50 + entrants}
-        #     the_list = the_list.append(record, ignore_index=True)
-        # elif r['standing'] == 3:
-        #     record = {'player': r['player'], 'score': 25 + entrants}
-        #     the_list = the_list.append(record, ignore_index=True)
-        # elif r['standing'] == 4:
-        #     record = {'player': r['player'], 'score': 12 + entrants}
-        #     the_list = the_list.append(record, ignore_index=True)
-        # elif r['standing'] == 5:
-        #     record = {'player': r['player'], 'score': 6 + entrants}
-        #     the_list = the_list.append(record, ignore_index=True)
-        # elif r['standing'] == 7:
-        #     record = {'player': r['player'], 'score': 3 + entrants}
-        #     the_list = the_list.append(record, ignore_index=True)
 
-    print(the_list)
+    the_list['rank'] = the_list['score'].rank(method='min', ascending=False)
 
-# find total entrants
-# def get_total_entrants():
-#     total_entrants = 0
-#     events = smash.tournament_show_events(h.__tournament_slug__)
-#
-#     for event in events:
-#         if event['name'] == h.__game_formal__:
-#             total_entrants = event['entrants']
-#
-#     # figure out unique DQ's, subtract from total_entrants
-#     keep_searching = True
-#     iterator = 0
-#     all_dqs = []
-#     while keep_searching:
-#         print(iterator)
-#         bracket_sets = smash.tournament_show_sets(h.__tournament_slug__, h.__game__, iterator)
-#         for set in bracket_sets:
-#             if set['entrant1Score'] == -1:
-#                 all_dqs.append(set['entrant1Name'])
-#             if set['entrant2Score'] == -1:
-#                 all_dqs.append(set['entrant2Name'])
-#         print(all_dqs)
-#         iterator += 1
-#         if bracket_sets == []:
-#             keep_searching = False
-#
-#     unique_dqs = []
-#
-#     unique_dq_count = 0
-#
-#     # traversing the array
-#     for item in all_dqs:
-#         if item not in unique_dqs:
-#             unique_dq_count += 1
-#             unique_dqs.append(item)
-#
-#     total_entrants = total_entrants - unique_dq_count
-#
-#     return total_entrants
-
-#
-# # assign points
-# def print_top_8():
-#     top_entrants = get_top8()
-#     total_entrants = get_total_entrants()
-#     print('test')
-#     for entrant in top_entrants:
-#         if entrant['finalPlacement'] == 1:
-#             entrant_name = entrant['tag']
-#             entrant_points = first + total_entrants
-#             print(f'{entrant_name} - {entrant_points}')
-#         if entrant['finalPlacement'] == 2:
-#             entrant_name = entrant['tag']
-#             entrant_points = second + total_entrants
-#             print(f'{entrant_name} - {entrant_points}')
-#         if entrant['finalPlacement'] == 3:
-#             entrant_name = entrant['tag']
-#             entrant_points = third + total_entrants
-#             print(f'{entrant_name} - {entrant_points}')
-#         if entrant['finalPlacement'] == 4:
-#             entrant_name = entrant['tag']
-#             entrant_points = fourth + total_entrants
-#             print(f'{entrant_name} - {entrant_points}')
-#         if entrant['finalPlacement'] == 5:
-#             entrant_name = entrant['tag']
-#             entrant_points = fifth + total_entrants
-#             print(f'{entrant_name} - {entrant_points}')
-#         if entrant['finalPlacement'] == 7:
-#             entrant_name = entrant['tag']
-#             entrant_points = seventh + total_entrants
-#             print(f'{entrant_name} - {entrant_points}')
+    with p.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', 1000):
+        print(the_list)
