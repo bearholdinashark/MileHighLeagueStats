@@ -5,14 +5,23 @@ import json as j
 from pprint import pprint
 
 # config values
-first = 100
-second = 50
-third = 25
-fourth = 12
-fifth = 6
-seventh = 3
+# first = 100
+# second = 50
+# third = 25
+# fourth = 12
+# fifth = 6
+# seventh = 3
 
 smash = h.init()
+
+score_map = {
+    1: 100,
+    2: 50,
+    3: 25,
+    4: 12,
+    5: 6,
+    7: 3
+}
 
 
 # find top 8
@@ -62,7 +71,7 @@ def get_dqs():
         record_count = count['data']['tournament']['events'][0]['sets']['pageInfo']['total']
         h.__dq_vars__['page'] += 1
         sets = sets['data']['tournament']['events'][0]['sets']
-        #print(sets)
+
         for node in sets['nodes']:
             if node['slots'][0]['standing']['stats']['score']['value'] == -1:
                 record = {'player': node['slots'][0]['standing']['entrant']['name']}
@@ -77,7 +86,7 @@ def get_dqs():
 
 
 def calculate_scores() -> p.DataFrame:
-    cols = ['player', 'score']
+    cols = ['player', 'score', 'rank']
     the_list = p.DataFrame(columns=cols)
     top8 = get_top_8()
     total = get_total_entrants()
@@ -90,10 +99,28 @@ def calculate_scores() -> p.DataFrame:
     print('---')
     print(top8)
 
-    for rank in top8:
-        if rank == 1:
-            record = {'player': rank['player'], 'standing': 100 + entrants}
-            the_list = the_list.append(record, ignore_index=True)
+    for i, r in top8.iterrows():
+        print('RANK: ', r['player'])
+        record = {'player': r['player'], 'score': score_map[r['standing']] + entrants}
+        the_list = the_list.append(record, ignore_index=True)
+        # if r['standing'] == 1:
+        #     record = {'player': r['player'], 'score': 100 + entrants}
+        #     the_list = the_list.append(record, ignore_index=True)
+        # elif r['standing'] == 2:
+        #     record = {'player': r['player'], 'score': 50 + entrants}
+        #     the_list = the_list.append(record, ignore_index=True)
+        # elif r['standing'] == 3:
+        #     record = {'player': r['player'], 'score': 25 + entrants}
+        #     the_list = the_list.append(record, ignore_index=True)
+        # elif r['standing'] == 4:
+        #     record = {'player': r['player'], 'score': 12 + entrants}
+        #     the_list = the_list.append(record, ignore_index=True)
+        # elif r['standing'] == 5:
+        #     record = {'player': r['player'], 'score': 6 + entrants}
+        #     the_list = the_list.append(record, ignore_index=True)
+        # elif r['standing'] == 7:
+        #     record = {'player': r['player'], 'score': 3 + entrants}
+        #     the_list = the_list.append(record, ignore_index=True)
 
     print(the_list)
 
