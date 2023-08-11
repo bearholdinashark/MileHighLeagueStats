@@ -1,4 +1,4 @@
-__token__ = '401d7ec72171a765951f742ae2202b7f'
+__token__ = ''
 __tournament_url__ = 'colorado-mile-high-burst-monthly-july-2023'
 __game__ = 'street-fighter-6'
 __game_formal__ = 'Street Fighter 6'
