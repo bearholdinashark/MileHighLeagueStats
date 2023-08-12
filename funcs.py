@@ -2,6 +2,7 @@ import headers as h
 from graphqlclient import GraphQLClient
 import pandas as p
 import json as j
+import time
 
 score_map = {
     1: 100,
@@ -102,25 +103,48 @@ def get_dqs():
 def calculate_scores() -> p.DataFrame:
     cols = ['player', 'score', 'rank', 'autoqual', 'qualified']
     the_list = p.DataFrame(columns=cols)
-    top8 = get_top_8()
-    total = get_total_entrants()
-    dq_count = len(get_dqs().index)
-    entrants = total - dq_count
+    for slug in zip(h.__tournament_slug__, h.__eventid__):
+        print(slug)
+        h.__top8_vars__['slug'] = slug[0]
+        h.__dq_vars__['slug'] = slug[0]
+        h.__top8_vars__['eventID'] = slug[1]
+        h.__dq_vars__['eventID'] = slug[1]
+        h.__top8_vars__['page'] = 0
+        h.__dq_vars__['page'] = 0
 
-    print('total - dq: ', entrants)
-    print('total: ', total)
-    print('dq: ', dq_count)
-    #print(top8)
+        print(h.__top8_vars__)
+        print('---')
+        print(h.__dq_vars__)
 
-    for i, r in top8.iterrows():
-        record = {'player': r['player'],
-                  'score': score_map[r['standing']] + entrants,
-                  'rank': 0,
-                  'autoqual': r['autoqual'],
-                  'qualified': 0}
-        the_list = the_list.append(record, ignore_index=True)
+        top8 = get_top_8()
+        total = get_total_entrants()
+        dq_count = len(get_dqs().index)
+        entrants = total - dq_count
 
-    the_list['rank'] = the_list['score'].rank(method='max', ascending=False)
+        print('total - dq: ', entrants)
+        print('total: ', total)
+        print('dq: ', dq_count)
 
-    with p.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', 1000):
-        print(the_list)
+        print(top8)
+
+        for i, r in top8.iterrows():
+            if r['player'] in the_list['player'].values:
+                the_list['score'][the_list['player'] == r['player']] = \
+                    the_list['score'][the_list['player'] == r['player']] + (score_map[r['standing']] + entrants)
+                if the_list['autoqual'][the_list['player'] == r['player']].values == 0 \
+                        and r['autoqual'] == 1:
+                    the_list['autoqual'][the_list['player'] == r['player']] = 1
+            else:
+                record = {'player': r['player'],
+                          'score': score_map[r['standing']] + entrants,
+                          'rank': 0,
+                          'autoqual': r['autoqual'],
+                          'qualified': 0}
+                the_list = the_list.append(record, ignore_index=True)
+
+        the_list['rank'] = the_list['score'].rank(method='average', ascending=False)
+
+        with p.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', 1000):
+            print(the_list)
+            #print(the_list.sort_values(by=['rank'], axis=1))
+        time.sleep(3)
