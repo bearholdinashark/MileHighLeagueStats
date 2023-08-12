@@ -51,7 +51,9 @@ def get_dqs():
     client.inject_token('Bearer ' + h.__token__)
     record_count = 1
     cols = ['player']
-    dq_df = p.DataFrame(columns=cols)
+    dqw_df = p.DataFrame(columns=cols)
+    dql_df = p.DataFrame(columns=cols)
+
     while record_count != 0:
         set_list = client.execute(h.__dq_query__, h.__dq_vars__)
 
@@ -64,16 +66,37 @@ def get_dqs():
         h.__dq_vars__['page'] += 1
 
         for node in sets['nodes']:
-            if node['slots'][0]['standing']['stats']['score']['value'] == -1:
-                record = {'player': node['slots'][0]['standing']['entrant']['name']}
-                dq_df = dq_df.append(record, ignore_index=True)
+            if node['slots'][0]['standing']['stats']['score']['value'] == -1 and node['slots'][0]['standing']['placement'] == 2:
+                if node['round'] > 0:
+                    record = {'player': node['slots'][0]['standing']['entrant']['name']}
+                    dqw_df = dqw_df.append(record, ignore_index=True)
+                elif node['round'] < 0:
+                    record = {'player': node['slots'][0]['standing']['entrant']['name']}
+                    dql_df = dql_df.append(record, ignore_index=True)
 
-            if node['slots'][1]['standing']['stats']['score']['value'] == -1:
-                record = {'player': node['slots'][1]['standing']['entrant']['name']}
-                dq_df = dq_df.append(record, ignore_index=True)
+            if node['slots'][1]['standing']['stats']['score']['value'] == -1 and node['slots'][1]['standing']['placement'] == 2:
+                if node['round'] > 0:
+                    record = {'player': node['slots'][1]['standing']['entrant']['name']}
+                    dqw_df = dqw_df.append(record, ignore_index=True)
+                elif node['round'] < 0:
+                    record = {'player': node['slots'][1]['standing']['entrant']['name']}
+                    dql_df = dql_df.append(record, ignore_index=True)
 
-    #print(dq_df.drop_duplicates())
-    return dq_df.drop_duplicates()['player']
+    dqw_df = dqw_df.drop_duplicates().sort_values(by=['player'])
+    dql_df = dql_df.drop_duplicates().sort_values(by=['player'])
+    dq_df = dqw_df.merge(dql_df, left_on='player', right_on='player')
+
+    # print('WINNERS')
+    # print('---------')
+    # print(dqw_df)
+    # print('LOSERS')
+    # print('---------')
+    # print(dql_df)
+    # print('DQ LIST')
+    # print('---------')
+    # print(dq_df)
+
+    return dq_df
 
 
 def calculate_scores() -> p.DataFrame:
@@ -81,7 +104,7 @@ def calculate_scores() -> p.DataFrame:
     the_list = p.DataFrame(columns=cols)
     top8 = get_top_8()
     total = get_total_entrants()
-    dq_count = get_dqs().count()
+    dq_count = len(get_dqs().index)
     entrants = total - dq_count
 
     print('total - dq: ', entrants)
@@ -97,7 +120,7 @@ def calculate_scores() -> p.DataFrame:
                   'qualified': 0}
         the_list = the_list.append(record, ignore_index=True)
 
-    the_list['rank'] = the_list['score'].rank(method='min', ascending=False)
+    the_list['rank'] = the_list['score'].rank(method='max', ascending=False)
 
     with p.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', 1000):
         print(the_list)
