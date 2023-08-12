@@ -3,8 +3,14 @@ __tournament_url__ = 'colorado-mile-high-burst-monthly-july-2023'
 __game__ = 'street-fighter-6'
 __game_formal__ = 'Street Fighter 6'
 __APIversion__ = 'alpha'
-__tournament_slug__ = 'colorado-mile-high-burst-monthly-july-2023'
-__autoqual_slug__ = ['colorado-mile-high-burst-monthly-july-2023']
+__tournament_slug__ = ['colorado-mile-high-burst-monthly-july-2023',
+                       # 'colorado-akihabara-arcade-monthly-june-2023',
+                       'bowu-monthly-2']
+__eventid__ = ['935958', # Aki July
+               # '914553', # Aki June
+               '944803'] #Springs 2
+__autoqual_slug__ = ['colorado-mile-high-burst-monthly-july-2023',
+                     'bowu-monthly-2']
 __top8_query__ = """
     query TournamentQuery($slug: String, $eventID: ID, $page: Int!, $perPage: Int!) {
       tournament(slug: $slug) {
@@ -26,8 +32,7 @@ __top8_query__ = """
     }
 """
 __top8_vars__ = {
-    "slug": "colorado-mile-high-burst-monthly-july-2023",
-    "eventID": "935958",
+    "eventID": '935958',
     "phase": "Finals",
     "page": 1,
     "perPage": 8,
@@ -49,6 +54,7 @@ __dq_query__ = """
         }
         nodes {
           id
+          round
           slots {
             standing {
               id
@@ -72,7 +78,7 @@ __dq_query__ = """
 """
 __dq_vars__ = {
   "slug": __tournament_slug__,
-  "eventID": "935958",
+  "eventID": '935958',
   "phase": "Finals",
   "page": 1,
   "perPage": 50
