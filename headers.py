@@ -4,12 +4,13 @@ __game__ = 'street-fighter-6'
 __game_formal__ = 'Street Fighter 6'
 __APIversion__ = 'alpha'
 __tournament_slug__ = ['colorado-mile-high-burst-monthly-july-2023',
-                       # 'colorado-akihabara-arcade-monthly-june-2023',
+                        'colorado-mile-high-burst-monthly-august-2023',
                        'bowu-monthly-2']
 __eventid__ = ['935958', # Aki July
-               # '914553', # Aki June
+                '953284', # Aki Aug
                '944803'] #Springs 2
 __autoqual_slug__ = ['colorado-mile-high-burst-monthly-july-2023',
+                     'colorado-mile-high-burst-monthly-august-2023',
                      'bowu-monthly-2']
 __top8_query__ = """
     query TournamentQuery($slug: String, $eventID: ID, $page: Int!, $perPage: Int!) {
