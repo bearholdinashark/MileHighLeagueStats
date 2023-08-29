@@ -1,17 +1,22 @@
 __token__ = ''
-__tournament_url__ = 'colorado-mile-high-burst-monthly-july-2023'
-__game__ = 'street-fighter-6'
-__game_formal__ = 'Street Fighter 6'
 __APIversion__ = 'alpha'
+__games__ = ['Street Fighter 6',
+             'Guilty Gear: Strive'
+             ]
+__current_game__ = ''
 __tournament_slug__ = ['colorado-mile-high-burst-monthly-july-2023',
-                        'colorado-mile-high-burst-monthly-august-2023',
-                       'bowu-monthly-2']
-__eventid__ = ['935958', # Aki July
-                '953284', # Aki Aug
-               '944803'] #Springs 2
-__autoqual_slug__ = ['colorado-mile-high-burst-monthly-july-2023',
+                       'colorado-mile-high-burst-monthly-august-2023',
+                       'bowu-monthly-2',
+                       'noco-clash-august-2023',
+                       'bowu-monthly-3'
+                       ]
+__autoqual_slug__ = [
+                     'colorado-mile-high-burst-monthly-july-2023',
                      'colorado-mile-high-burst-monthly-august-2023',
-                     'bowu-monthly-2']
+                     'bowu-monthly-2',
+                     'noco-clash-august-2023',
+                     'bowu-monthly-3'
+                     ]
 __top8_query__ = """
     query TournamentQuery($slug: String, $eventID: ID, $page: Int!, $perPage: Int!) {
       tournament(slug: $slug) {
@@ -33,11 +38,10 @@ __top8_query__ = """
     }
 """
 __top8_vars__ = {
-    "eventID": '935958',
-    "phase": "Finals",
+    "slug": '',
+    "eventID": '',
     "page": 1,
-    "perPage": 8,
-    "slug": __tournament_slug__
+    "perPage": 8
 }
 __dq_query__ = """
     query TournamentQuery($slug: String, $eventID: ID, $page: Int!) {
@@ -78,9 +82,29 @@ __dq_query__ = """
 
 """
 __dq_vars__ = {
-  "slug": __tournament_slug__,
-  "eventID": '935958',
-  "phase": "Finals",
-  "page": 1,
-  "perPage": 50
+    "slug": '',
+    "eventID": '',
+    "page": 1,
+    "perPage": 50
+}
+
+__event_lookup__ = """
+    query TournamentQuery($slug: String) {
+        tournament(slug: $slug) {
+            name,
+            events(filter: {
+            #id: $eventID
+            }) {
+                name,
+                id,
+                videogame {
+                    name
+                }
+            }
+        }
+  }
+    """
+
+__event_lookup_vars__ = {
+    "slug": ''
 }
