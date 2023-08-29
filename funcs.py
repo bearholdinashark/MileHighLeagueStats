@@ -1,5 +1,4 @@
 from graphqlclient import GraphQLClient
-from datetime import datetime as d
 import pandas as p
 import json as j
 import headers as h
@@ -50,7 +49,6 @@ def get_top_8(the_list: p.DataFrame) -> p.DataFrame:
     client = GraphQLClient('https://api.start.gg/gql/' + h.__APIversion__)
     client.inject_token('Bearer ' + h.__token__)
     event_list = client.execute(h.__top8_query__, h.__top8_vars__)
-    # print(event_list)
     standings = j.loads(event_list)['data']['tournament']['events'][0]['standings']['nodes']
 
     cols = ["player", "standing", "autoqual"]
@@ -74,7 +72,7 @@ def get_top_8(the_list: p.DataFrame) -> p.DataFrame:
     for x in range(delta+1):
         top_df.loc[x, 'autoqual'] = 1
 
-    print('-----')
+    print('')
     print(top_df)
 
     return top_df
@@ -126,35 +124,22 @@ def get_dqs() -> p.DataFrame:
 
 
 def mark_qualifiers(df: p.DataFrame) -> p.DataFrame:
-    # time.sleep(5)
     aq_df = df[df['autoqual'] == 1].copy()  # Get auto qualifiers
     sc_df = p.DataFrame()            # Get score qualifiers
     nq_df = p.DataFrame()            # Get everyone else
 
-    # aq_diff = len(aq_df)
-    # print(aq_diff)
-    aq_diff = 0
-
     if h.__current_game__ == 'Street Fighter 6':  # Get top 7 for SF6
-        sc_df = df.loc[df['autoqual'] == 0].sort_values('score', ascending=False).head(7 - aq_diff).copy()
-        nq_df = df.loc[df['autoqual'] == 0].sort_values('score', ascending=False).tail(-7 + aq_diff).copy()
+        sc_df = df.loc[df['autoqual'] == 0].sort_values('score', ascending=False).head(7).copy()
+        nq_df = df.loc[df['autoqual'] == 0].sort_values('score', ascending=False).tail(-7).copy()
     if h.__current_game__ == 'Guilty Gear: Strive':  # Get top 8 for GGS
-        sc_df = df.loc[df['autoqual'] == 0].sort_values('score', ascending=False).head(8 - aq_diff).copy()
-        nq_df = df.loc[df['autoqual'] == 0].sort_values('score', ascending=False).tail(-8 + aq_diff).copy()
+        sc_df = df.loc[df['autoqual'] == 0].sort_values('score', ascending=False).head(8).copy()
+        nq_df = df.loc[df['autoqual'] == 0].sort_values('score', ascending=False).tail(-8).copy()
 
     aq_df.loc[:, 'qualified'] = 1
     sc_df.loc[:, 'qualified'] = 1
     sc_df.loc[:, 'points_qual'] = 1
 
     df = p.concat([aq_df, sc_df, nq_df])
-
-    # with p.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', 1000):
-    #     time.sleep(1)
-    #     print(aq_df)
-    #     print(sc_df)
-    #     print(nq_df)
-    #     print('---------------------------')
-    #     print(df.sort_values('rank', ascending=True))
 
     return df.sort_values('rank', ascending=True)
 
@@ -165,6 +150,7 @@ def calculate_scores() -> p.DataFrame:
         h.__current_game__ = game
         the_list = p.DataFrame(columns=cols)
         for slug in h.__tournament_slug__:
+            print('')
             print('-----')
             print('GAME: ', game)
             print('TOURNAMENT ', slug)
@@ -177,18 +163,10 @@ def calculate_scores() -> p.DataFrame:
             h.__top8_vars__['page'] = 0
             h.__dq_vars__['page'] = 0
 
-            # print(h.__top8_vars__)
-            # print('---')
-            # print(h.__dq_vars__)
-
             top8 = get_top_8(the_list)
             total = get_total_entrants()
             dq_count = len(get_dqs().index)
             entrants = total - dq_count
-
-            # print('total - dq: ', entrants)
-            # print('total: ', total)
-            # print('dq: ', dq_count)
 
             for i, r in top8.iterrows():
                 if r['player'] in the_list['player'].values:
